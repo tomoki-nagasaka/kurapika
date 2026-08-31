@@ -98,7 +98,9 @@ Used automatically by Claude during conversation (or on explicit request).
 
 | Skill      | Trigger                                                                                                    | What it does                                                                                                                                                                                                                 |
 | ---------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `feature`  | Starting a new unit of work before any decision has been made, e.g. "let's start working on X"             | Creates `TASKS/<feature>/summary.md` and links it from the "in-progress features" section of `summary-todo.md`. Not needed if you're about to record an ADR — `adr` creates the feature folder automatically. Required before `issue`, though, since issues attach to an existing feature and don't create one |
 | `adr`      | A design decision or technology choice has been finalized, or on explicit requests like "make this an ADR" | Creates `TASKS/<feature>/ADR/ADR-XXXX-<slug>.md` (numbered per-feature in 4 digits). Also auto-appends cross-links to the "related ADRs" section of `summary.md` and the "in-progress features" section of `summary-todo.md` |
+| `issue`    | Explicit requests like "break this ADR into issues" (never triggers automatically)                         | Reads an ADR's Decision section and creates one or more `TASKS/<feature>/ISSUE/ISSUE-XXXX-<slug>.md` files (numbered per-feature in 4 digits) after confirming the breakdown with the user                                  |
 | `summary`  | A non-ADR progress update, a milestone, or a TODO change is detected                                       | Updates the relevant section of `summary.md` (per feature) or `summary-todo.md` (project-wide) (backs up to `.bak` before writing)                                                                                           |
 | `search`   | Phrases like "what did we decide about X again?" or "find past notes about X"                              | Scores Vault Markdown files by filename / heading / body match and surfaces relevant files (grep-based, no dependencies)                                                                                                     |
 | `organize` | Explicit requests like "tidy up the Vault" or "check if anything's a mess" (never triggers automatically)  | Detects and reports empty feature folders, features not linked from `summary-todo.md`, gaps/duplicates in ADR numbering, and broken relative links (never auto-fixes anything)                                               |
@@ -114,6 +116,8 @@ Used automatically by Claude during conversation (or on explicit request).
         summary.md
         ADR/
           ADR-0001-<slug>.md
+        ISSUE/
+          ISSUE-0001-<slug>.md
 ```
 
 Directory and file names are alphanumeric kebab-case, and the generated templates
@@ -131,7 +135,9 @@ All of the commands/hooks/skills above are just thin wrappers around `bin/kurapi
 | `kurapika config clear [--confirm]`                                                                            | Clears the setting. Without `--confirm`, only shows what would be cleared                           |
 | `kurapika reset-project --project P [--confirm]`                                                               | Moves a project into `.trash/`. Without `--confirm`, only shows the target path and file count      |
 | `kurapika hook session-start`                                                                                  | The actual work behind the SessionStart hook (reads `CLAUDE_PROJECT_DIR` and scaffolds the project) |
+| `kurapika new-feature --project P --feature-slug F --feature-title T`                                          | Creates the feature folder and `summary.md`, and links it from `summary-todo.md`                    |
 | `kurapika new-adr --project P --feature-slug F --feature-title T --adr-slug S --adr-title A [--status STATUS]` | Creates a new ADR and auto-links it from the summary/TODO                                           |
+| `kurapika new-issue --project P --feature-slug F --issue-slug S --issue-title T [--adr-ref REF] [--status STATUS]` | Creates a new issue under an existing feature (fails if the feature doesn't exist yet)           |
 | `kurapika update-doc --path PATH --heading "## Heading"` (body read from stdin)                                | Upserts the body of the given section                                                               |
 | `kurapika search QUERY [--project P] [--limit N]`                                                              | Searches the Vault by keyword                                                                       |
 | `kurapika organize-report [--project P]`                                                                       | Prints the health-check report as JSON                                                              |

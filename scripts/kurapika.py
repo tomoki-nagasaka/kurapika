@@ -24,6 +24,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = PLUGIN_ROOT / "templates"
 
 ADR_NUMBER_RE = re.compile(r"^ADR-(\d{4})-")
+ISSUE_NUMBER_RE = re.compile(r"^ISSUE-(\d{4})-")
 SLUG_INVALID_RE = re.compile(r"[^a-z0-9-]+")
 LINK_RE = re.compile(r"\]\(([^)]+)\)")
 
@@ -162,6 +163,48 @@ def ensure_project_skeleton(vault_root: Path, project_name: str) -> list:
 
 def feature_dir(vault_root: Path, project_name: str, feature_slug: str) -> Path:
     return vault_root / project_name / "TASKS" / feature_slug
+
+
+def ensure_feature_skeleton(
+    vault_root: Path, project_name: str, feature_slug: str, feature_title: str
+):
+    """Create the feature folder and summary.md if missing, and link it from
+    summary-todo.md the first time. Returns (feature_dir, is_new_feature)."""
+    fdir = feature_dir(vault_root, project_name, feature_slug)
+    summary_path = fdir / "summary.md"
+    is_new_feature = not fdir.exists()
+
+    fdir.mkdir(parents=True, exist_ok=True)
+
+    if not summary_path.exists():
+        content = render_template(
+            "feature-summary.md",
+            project_name=project_name,
+            feature_title=feature_title,
+            created_date=today(),
+        )
+        atomic_write_text(summary_path, content)
+
+    if is_new_feature:
+        summary_todo_path = vault_root / project_name / "summary-todo.md"
+        _upsert_link_line(
+            summary_todo_path,
+            "## In-progress features",
+            f"- [{feature_title}](./TASKS/{feature_slug}/summary.md)",
+        )
+
+    return fdir, is_new_feature
+
+
+def next_numbered_file(dir_path: Path, pattern: re.Pattern) -> int:
+    if not dir_path.exists():
+        return 1
+    max_n = 0
+    for entry in dir_path.iterdir():
+        m = pattern.match(entry.name)
+        if m:
+            max_n = max(max_n, int(m.group(1)))
+    return max_n + 1
 
 
 # ---------- section / link upsert ----------
@@ -332,18 +375,33 @@ def cmd_hook_session_start(args):
     return 0
 
 
-# ---------- commands: ADR ----------
+# ---------- commands: feature ----------
 
-def next_adr_number(adr_dir: Path) -> int:
-    if not adr_dir.exists():
+def cmd_new_feature(args):
+    vault_root = get_vault_root()
+    if vault_root is None:
+        print("Vault is not configured. Run /obsidian-init to set it up.", file=sys.stderr)
         return 1
-    max_n = 0
-    for entry in adr_dir.iterdir():
-        m = ADR_NUMBER_RE.match(entry.name)
-        if m:
-            max_n = max(max_n, int(m.group(1)))
-    return max_n + 1
 
+    feature_slug = slugify(args.feature_slug)
+
+    with with_lock(vault_root):
+        ensure_project_skeleton(vault_root, args.project)
+        fdir, is_new_feature = ensure_feature_skeleton(
+            vault_root, args.project, feature_slug, args.feature_title
+        )
+
+    result = {
+        "project": args.project,
+        "feature_slug": feature_slug,
+        "feature_dir": str(fdir.relative_to(vault_root)),
+        "is_new_feature": is_new_feature,
+    }
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+# ---------- commands: ADR ----------
 
 def cmd_new_adr(args):
     vault_root = get_vault_root()
@@ -352,26 +410,17 @@ def cmd_new_adr(args):
         return 1
 
     feature_slug = slugify(args.feature_slug)
-    fdir = feature_dir(vault_root, args.project, feature_slug)
-    adr_dir = fdir / "ADR"
-    summary_path = fdir / "summary.md"
 
     with with_lock(vault_root):
         ensure_project_skeleton(vault_root, args.project)
+        fdir, is_new_feature = ensure_feature_skeleton(
+            vault_root, args.project, feature_slug, args.feature_title
+        )
 
-        is_new_feature = not fdir.exists()
+        adr_dir = fdir / "ADR"
         adr_dir.mkdir(parents=True, exist_ok=True)
 
-        if not summary_path.exists():
-            content = render_template(
-                "feature-summary.md",
-                project_name=args.project,
-                feature_title=args.feature_title,
-                created_date=today(),
-            )
-            atomic_write_text(summary_path, content)
-
-        number = next_adr_number(adr_dir)
+        number = next_numbered_file(adr_dir, ADR_NUMBER_RE)
         adr_slug = slugify(args.adr_slug)
         filename = f"ADR-{number:04d}-{adr_slug}.md"
         adr_path = adr_dir / filename
@@ -387,25 +436,70 @@ def cmd_new_adr(args):
         )
         atomic_write_text(adr_path, content)
 
+        summary_path = fdir / "summary.md"
         _upsert_link_line(
             summary_path,
             "## Related ADRs",
             f"- [ADR-{number:04d}: {args.adr_title}](./ADR/{filename})",
         )
 
-        if is_new_feature:
-            summary_todo_path = vault_root / args.project / "summary-todo.md"
-            _upsert_link_line(
-                summary_todo_path,
-                "## In-progress features",
-                f"- [{args.feature_title}](./TASKS/{feature_slug}/summary.md)",
-            )
-
     result = {
         "project": args.project,
         "feature_slug": feature_slug,
         "adr_path": str(adr_path.relative_to(vault_root)),
         "is_new_feature": is_new_feature,
+    }
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+# ---------- commands: issue ----------
+
+def cmd_new_issue(args):
+    vault_root = get_vault_root()
+    if vault_root is None:
+        print("Vault is not configured. Run /obsidian-init to set it up.", file=sys.stderr)
+        return 1
+
+    feature_slug = slugify(args.feature_slug)
+    fdir = feature_dir(vault_root, args.project, feature_slug)
+
+    if not fdir.exists():
+        print(
+            json.dumps(
+                {"error": "feature_not_found", "feature_slug": feature_slug},
+                ensure_ascii=False,
+            ),
+            file=sys.stderr,
+        )
+        return 1
+
+    issue_dir = fdir / "ISSUE"
+
+    with with_lock(vault_root):
+        issue_dir.mkdir(parents=True, exist_ok=True)
+
+        number = next_numbered_file(issue_dir, ISSUE_NUMBER_RE)
+        issue_slug = slugify(args.issue_slug)
+        filename = f"ISSUE-{number:04d}-{issue_slug}.md"
+        issue_path = issue_dir / filename
+
+        content = render_template(
+            "issue.md",
+            number=f"{number:04d}",
+            title=args.issue_title,
+            status=args.status,
+            project_name=args.project,
+            feature_slug=feature_slug,
+            adr_ref=args.adr_ref,
+            date=today(),
+        )
+        atomic_write_text(issue_path, content)
+
+    result = {
+        "project": args.project,
+        "feature_slug": feature_slug,
+        "issue_path": str(issue_path.relative_to(vault_root)),
     }
     print(json.dumps(result, ensure_ascii=False))
     return 0
@@ -602,6 +696,12 @@ def build_arg_parser():
     hook_sub = p_hook.add_subparsers(dest="hook_command", required=True)
     hook_sub.add_parser("session-start").set_defaults(func=cmd_hook_session_start)
 
+    p_feature = sub.add_parser("new-feature")
+    p_feature.add_argument("--project", required=True)
+    p_feature.add_argument("--feature-slug", required=True, help="English kebab-case")
+    p_feature.add_argument("--feature-title", required=True, help="Human-facing title")
+    p_feature.set_defaults(func=cmd_new_feature)
+
     p_adr = sub.add_parser("new-adr")
     p_adr.add_argument("--project", required=True)
     p_adr.add_argument("--feature-slug", required=True, help="English kebab-case")
@@ -610,6 +710,17 @@ def build_arg_parser():
     p_adr.add_argument("--adr-title", required=True, help="Human-facing title")
     p_adr.add_argument("--status", default="proposed")
     p_adr.set_defaults(func=cmd_new_adr)
+
+    p_issue = sub.add_parser("new-issue")
+    p_issue.add_argument("--project", required=True)
+    p_issue.add_argument("--feature-slug", required=True)
+    p_issue.add_argument("--issue-slug", required=True, help="English kebab-case")
+    p_issue.add_argument("--issue-title", required=True, help="Human-facing title")
+    p_issue.add_argument(
+        "--adr-ref", default="", help="Filename of the related ADR, e.g. ADR-0001-slug.md"
+    )
+    p_issue.add_argument("--status", default="open")
+    p_issue.set_defaults(func=cmd_new_issue)
 
     p_update = sub.add_parser("update-doc")
     p_update.add_argument("--path", required=True, help="Path relative to vault_root, or absolute")
