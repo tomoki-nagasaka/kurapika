@@ -56,6 +56,15 @@ Once a design decision is finalized, record it as an ADR using the steps below.
      discussed (editing the file directly with the Edit tool is fine).
    - Only add an `## Options` section between `## Context` and `## Decision` by hand
      when multiple alternatives were actually compared (it's not in the default template).
+   - If this ADR records a decision reached while investigating an existing issue
+     (check `TASKS/<feature-slug>/ISSUE/` and confirm with the user if unclear), add a
+     `## Related Issues` section after `## Consequences` linking it, e.g.
+     `- [ISSUE-0003: Investigate X](../ISSUE/ISSUE-0003-investigate-x.md)`
+     (this is normally just one issue — do NOT use this section to list issues that
+     were broken down FROM this ADR; those already point back via their own
+     `adr_refs`, no need to duplicate that here). Then append this ADR's filename to
+     that issue's `adr_refs` list (editing the frontmatter directly with the Edit
+     tool — don't overwrite existing entries), and update its `status` if resolved.
 
 5. When done, report the path and a one-line summary of the ADR you created to the user.
 

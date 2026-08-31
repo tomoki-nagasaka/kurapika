@@ -491,7 +491,7 @@ def cmd_new_issue(args):
             status=args.status,
             project_name=args.project,
             feature_slug=feature_slug,
-            adr_ref=args.adr_ref,
+            adr_refs=json.dumps([args.adr_ref] if args.adr_ref else []),
             date=today(),
         )
         atomic_write_text(issue_path, content)

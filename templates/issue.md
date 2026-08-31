@@ -5,7 +5,7 @@ issue_number: {{number}}
 status: {{status}}
 project: "{{project_name}}"
 feature: "{{feature_slug}}"
-adr_ref: "{{adr_ref}}"
+adr_refs: {{adr_refs}}
 created: {{date}}
 updated: {{date}}
 tags: [issue]
