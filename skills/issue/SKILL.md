@@ -1,12 +1,14 @@
 ---
 name: issue
 description: >-
-  Breaks an ADR's decision down into concrete, trackable issues inside the
-  Obsidian Vault. Use it on explicit requests like "break this ADR into issues"
-  or "turn this decision into tasks". Does not trigger automatically.
+  Creates a standalone, trackable issue inside the Obsidian Vault to investigate
+  an open question before any decision/ADR exists. Use it on explicit requests
+  like "create an issue", "issue作成", or "let's track this as an issue". Not
+  for breaking an existing ADR's decision into issues — use the issue-breakdown
+  skill for that. Does not trigger automatically.
 ---
 
-# Issue breakdown skill
+# Issue creation skill
 
 ## Prerequisites
 
@@ -18,13 +20,9 @@ description: >-
 
 ## Steps
 
-1. Identify the ADR the user is referring to. If it's ambiguous, list
-   `TASKS/<feature>/ADR/` and ask which one.
-2. Read that ADR file and propose a breakdown of its `## Decision` section into
-   one or more concrete, actionable issues. Confirm the breakdown with the user
-   before creating anything.
-3. For each issue, decide an **English kebab-case** `--issue-slug` and a
-   human-facing `--issue-title`, then run:
+1. Confirm the target feature already exists (see Prerequisites).
+2. Decide an **English kebab-case** `--issue-slug` and a human-facing
+   `--issue-title` for the open question to investigate, then run:
 
    ```bash
    kurapika new-issue \
@@ -32,13 +30,16 @@ description: >-
      --feature-slug "<feature-slug>" \
      --issue-slug "<issue-slug>" \
      --issue-title "<issue-title>" \
-     --adr-ref "ADR-XXXX-slug.md" \
      --status "open"
    ```
 
    This creates `TASKS/<feature-slug>/ISSUE/ISSUE-XXXX-<issue-slug>.md`
-   (numbered per-feature in 4 digits, same scheme as ADRs).
-
-4. Fill in `## Description` and `## Acceptance Criteria` for each created issue
-   based on the ADR content (editing directly with the Edit tool is fine).
-5. Report the created issue paths to the user.
+   (numbered per-feature in 4 digits, same scheme as ADRs) with an empty
+   `adr_refs` list.
+3. Fill in `## Description` and `## Acceptance Criteria` based on the open
+   question (editing directly with the Edit tool is fine).
+4. Report the created issue path to the user, and mention: whenever a decision
+   is reached for this issue, running the `adr` skill and mentioning this issue
+   will append the new ADR to its `adr_refs` list. This can happen more than
+   once over the issue's lifetime — a single issue may accumulate several ADRs
+   as it's investigated further.

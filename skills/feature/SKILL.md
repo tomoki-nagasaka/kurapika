@@ -5,8 +5,8 @@ description: >-
   design decision has been made. Triggers on phrases like "let's start working on
   X", "new feature: X", or "I'm about to begin X". Not needed if you're about to
   record an ADR — the adr skill creates the feature folder automatically. It IS
-  needed before using the issue skill, since issues attach to an existing feature
-  and won't create one.
+  needed before using the issue or issue-breakdown skills, since issues attach
+  to an existing feature and won't create one.
 ---
 
 # Feature start skill
