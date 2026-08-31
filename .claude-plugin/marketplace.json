@@ -1,0 +1,22 @@
+{
+  "name": "kurapika-marketplace",
+  "owner": {
+    "name": "tomoki-nagasaka"
+  },
+  "metadata": {
+    "description": "kurapika: personal dev-notes plugin for Obsidian Vaults",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "kurapika",
+      "source": "./",
+      "description": "A plugin that automatically accumulates ADRs, feature summaries, and TODOs in an Obsidian Vault, per development project",
+      "version": "0.1.1",
+      "author": {
+        "name": "tomoki-nagasaka"
+      },
+      "license": "MIT"
+    }
+  ]
+}

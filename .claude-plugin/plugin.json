@@ -1,0 +1,9 @@
+{
+  "name": "kurapika",
+  "version": "0.1.1",
+  "description": "A plugin that automatically accumulates ADRs, feature summaries, and TODOs in an Obsidian Vault, per development project",
+  "author": {
+    "name": "tomoki-nagasaka"
+  },
+  "license": "MIT"
+}
