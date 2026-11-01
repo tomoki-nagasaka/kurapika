@@ -657,11 +657,22 @@ def run_cleanup(ctx: Ctx) -> dict:
 
 # ---------- organize ----------
 
-def _link_exists(root: Path, target: str, stems: set) -> bool:
+def obsidian_vault_root(root: Path) -> Path:
+    """The enclosing Obsidian Vault (folder with .obsidian/), since wiki links
+    resolve across the whole Vault even when kurapika lives in a subfolder."""
+    for candidate in (root, *root.parents):
+        if (candidate / ".obsidian").is_dir():
+            return candidate
+    return root
+
+
+def _link_exists(target: str, files: set) -> bool:
+    """Obsidian resolves [[a/b]] to any file whose path ends with a/b(.md)."""
     target = target.strip()
-    if "/" not in target:
-        return target in stems or Path(target).stem in stems
-    return any(p.exists() for p in (root / target, root / (target + ".md")))
+    for candidate in (target, target + ".md"):
+        if candidate in files or any(f.endswith("/" + candidate) for f in files):
+            return True
+    return False
 
 
 def organize_report(ctx: Ctx) -> dict:
@@ -704,13 +715,18 @@ def organize_report(ctx: Ctx) -> dict:
     if not index_is_foreign(ctx.root) and (ctx.root / INDEX_NAME).is_file():
         managed_files.append(ctx.root / INDEX_NAME)
 
-    stems = {p.stem for p in ctx.root.rglob("*.md")}
+    vault = obsidian_vault_root(ctx.root)
+    files = {
+        p.relative_to(vault).as_posix()
+        for p in vault.rglob("*")
+        if p.is_file() and not any(part.startswith(".") for part in p.relative_to(vault).parts)
+    }
     for path in managed_files:
         text = read_text(path)
         if text is None:
             continue
         for m in WIKI_LINK_RE.finditer(text):
-            if not _link_exists(ctx.root, m.group(1), stems):
+            if not _link_exists(m.group(1), files):
                 report["broken_links"].append({"file": str(path.relative_to(ctx.root)), "link": m.group(1)})
         for m in MD_LINK_RE.finditer(text):
             target = m.group(1).strip()
