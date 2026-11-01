@@ -1,0 +1,22 @@
+{
+  "name": "kurapika-marketplace",
+  "owner": {
+    "name": "tomoki-nagasaka"
+  },
+  "metadata": {
+    "description": "kurapika: per-topic dev notes for Obsidian Vaults",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kurapika",
+      "source": "./",
+      "description": "Per-topic notes in a local Obsidian Vault: research, direction, progress and decisions, recalled with summaries and links",
+      "version": "1.0.0",
+      "author": {
+        "name": "tomoki-nagasaka"
+      },
+      "license": "MIT"
+    }
+  ]
+}

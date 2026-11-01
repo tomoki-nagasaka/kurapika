@@ -1,0 +1,177 @@
+<svg viewBox="0 0 1600 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Claude Note — 光が溢れる石の扉のイラスト">
+  <title>Claude Note</title>
+  <style>
+    .drift{ animation: rise 4.5s linear infinite; }
+    @keyframes rise{
+      0%{ transform:translate(var(--x0), var(--y0)) scale(var(--s0)); opacity:0; }
+      12%{ opacity:.95; }
+      85%{ opacity:.5; }
+      100%{ transform:translate(var(--x1), var(--y1)) scale(var(--s1)); opacity:0; }
+    }
+    .flicker{ animation: pulse 4s ease-in-out infinite; transform-origin:800px 355px; }
+    @keyframes pulse{
+      0%,100%{ opacity:.75; }
+      50%{ opacity:1; }
+    }
+    .spark{ animation: twinkle 3.6s ease-in-out infinite; }
+    @keyframes twinkle{
+      0%,100%{ opacity:.25; }
+      50%{ opacity:.8; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .drift, .flicker, .spark{ animation:none !important; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2A160C"/>
+      <stop offset="60%" stop-color="#40200F"/>
+      <stop offset="100%" stop-color="#5C2E14"/>
+    </linearGradient>
+    <linearGradient id="stoneV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C9AD82"/>
+      <stop offset="55%" stop-color="#8A6B48"/>
+      <stop offset="100%" stop-color="#5E4429"/>
+    </linearGradient>
+    <linearGradient id="doorPanel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5E4429"/>
+      <stop offset="100%" stop-color="#382613"/>
+    </linearGradient>
+    <radialGradient id="burst" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE29A" stop-opacity="0.85"/>
+      <stop offset="40%" stop-color="#FF9736" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#FF9736" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="burst2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF3D0" stop-opacity="1"/>
+      <stop offset="35%" stop-color="#FFE29A" stop-opacity="0.95"/>
+      <stop offset="70%" stop-color="#FF9736" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#FF9736" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE29A" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFE29A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pageL" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FFF6E4"/>
+      <stop offset="100%" stop-color="#F4DFB4"/>
+    </linearGradient>
+    <linearGradient id="pageR" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFF6E4"/>
+      <stop offset="100%" stop-color="#F4DFB4"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="640" fill="url(#sky)"/>
+
+  <!-- distant embers -->
+  <g fill="#FF9736">
+    <circle class="spark" cx="140" cy="160" r="2.5"/>
+    <circle class="spark" cx="260" cy="300" r="2"/>
+    <circle class="spark" cx="90" cy="420" r="2"/>
+    <circle class="spark" cx="1460" cy="180" r="2.5"/>
+    <circle class="spark" cx="1340" cy="320" r="2"/>
+    <circle class="spark" cx="1500" cy="440" r="2"/>
+    <circle class="spark" cx="380" cy="120" r="1.6"/>
+    <circle class="spark" cx="1220" cy="140" r="1.6"/>
+  </g>
+
+  <!-- glow bleeding out behind the whole gate -->
+  <ellipse class="flicker" cx="800" cy="355" rx="300" ry="340" fill="url(#burst)"/>
+
+  <!-- pedestal -->
+  <rect x="596" y="572" width="408" height="26" fill="#8A6B48"/>
+  <rect x="576" y="598" width="448" height="16" fill="#4A3320"/>
+
+  <!-- pilasters -->
+  <rect x="613" y="132" width="46" height="440" fill="url(#stoneV)" stroke="#3A2814" stroke-width="2"/>
+  <rect x="941" y="132" width="46" height="440" fill="url(#stoneV)" stroke="#3A2814" stroke-width="2"/>
+  <g stroke="#3A2814" stroke-opacity="0.5" stroke-width="2">
+    <line x1="626" y1="150" x2="626" y2="558"/>
+    <line x1="636" y1="150" x2="636" y2="558"/>
+    <line x1="646" y1="150" x2="646" y2="558"/>
+    <line x1="954" y1="150" x2="954" y2="558"/>
+    <line x1="964" y1="150" x2="964" y2="558"/>
+    <line x1="974" y1="150" x2="974" y2="558"/>
+  </g>
+
+  <!-- frieze band -->
+  <rect x="596" y="76" width="408" height="56" fill="#8A6B48" stroke="#3A2814" stroke-width="2"/>
+  <g stroke="#3A2814" stroke-opacity="0.45" stroke-width="3" fill="none">
+    <path d="M 630 104 Q 660 86 690 104 T 750 104 T 810 104 T 870 104 T 930 104 T 970 104"/>
+  </g>
+
+  <!-- cornice -->
+  <rect x="580" y="40" width="440" height="30" fill="#C9AD82" stroke="#3A2814" stroke-width="2"/>
+  <rect x="592" y="68" width="416" height="10" fill="#4A3320"/>
+
+  <!-- open doorway, thrown wide -->
+  <rect x="699" y="132" width="202" height="440" fill="#180B04"/>
+  <ellipse class="flicker" cx="800" cy="355" rx="150" ry="290" fill="url(#burst2)"/>
+
+  <!-- rays fanning out through the open doors -->
+  <g class="flicker" stroke="#FFE29A" stroke-opacity="0.35" stroke-width="2">
+    <line x1="800" y1="355" x2="712" y2="148"/>
+    <line x1="800" y1="355" x2="762" y2="138"/>
+    <line x1="800" y1="355" x2="838" y2="138"/>
+    <line x1="800" y1="355" x2="888" y2="148"/>
+    <line x1="800" y1="355" x2="712" y2="562"/>
+    <line x1="800" y1="355" x2="762" y2="572"/>
+    <line x1="800" y1="355" x2="838" y2="572"/>
+    <line x1="800" y1="355" x2="888" y2="562"/>
+  </g>
+
+  <!-- left leaf, thrown open flat against the pilaster -->
+  <g>
+    <rect x="659" y="132" width="40" height="440" fill="url(#doorPanel)" stroke="#2A1B0E" stroke-width="2"/>
+    <rect x="669" y="152" width="20" height="160" fill="none" stroke="#2A1B0E" stroke-opacity="0.6" stroke-width="2"/>
+    <rect x="669" y="330" width="20" height="220" fill="none" stroke="#2A1B0E" stroke-opacity="0.6" stroke-width="2"/>
+    <rect x="697" y="132" width="4" height="440" fill="#FFE29A" opacity="0.55"/>
+    <rect x="654" y="180" width="10" height="16" rx="3" fill="#3A2814"/>
+    <rect x="654" y="350" width="10" height="16" rx="3" fill="#3A2814"/>
+    <rect x="654" y="500" width="10" height="16" rx="3" fill="#3A2814"/>
+  </g>
+  <!-- right leaf, thrown open flat against the pilaster -->
+  <g>
+    <rect x="901" y="132" width="40" height="440" fill="url(#doorPanel)" stroke="#2A1B0E" stroke-width="2"/>
+    <rect x="911" y="152" width="20" height="160" fill="none" stroke="#2A1B0E" stroke-opacity="0.6" stroke-width="2"/>
+    <rect x="911" y="330" width="20" height="220" fill="none" stroke="#2A1B0E" stroke-opacity="0.6" stroke-width="2"/>
+    <rect x="899" y="132" width="4" height="440" fill="#FFE29A" opacity="0.55"/>
+    <rect x="936" y="180" width="10" height="16" rx="3" fill="#3A2814"/>
+    <rect x="936" y="350" width="10" height="16" rx="3" fill="#3A2814"/>
+    <rect x="936" y="500" width="10" height="16" rx="3" fill="#3A2814"/>
+  </g>
+
+  <!-- light spilling out beyond the frame -->
+  <ellipse class="flicker" cx="800" cy="132" rx="110" ry="30" fill="url(#spill)"/>
+  <ellipse class="flicker" cx="800" cy="572" rx="110" ry="30" fill="url(#spill)"/>
+
+  <!-- motes and page fragments drawn into the gap -->
+  <g fill="#FFE29A">
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:-8px;--y1:-190px;--s0:1;--s1:0.15" cx="760" cy="545" r="6"/>
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:10px;--y1:-185px;--s0:1;--s1:0.15;animation-delay:-1.1s" cx="840" cy="548" r="5.5"/>
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:-4px;--y1:-175px;--s0:1;--s1:0.15;animation-delay:-2.2s" cx="795" cy="500" r="4.5"/>
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:6px;--y1:-165px;--s0:1;--s1:0.15;animation-delay:-3.1s" cx="812" cy="470" r="4"/>
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:-3px;--y1:-140px;--s0:1;--s1:0.1;animation-delay:-0.6s" cx="785" cy="430" r="3"/>
+    <circle class="drift" style="--x0:0px;--y0:0px;--x1:3px;--y1:-120px;--s0:1;--s1:0.1;animation-delay:-1.8s" cx="815" cy="410" r="2.5"/>
+  </g>
+
+  <!-- the open book, pulled toward the doorway -->
+  <g transform="translate(800,545) scale(0.82)">
+    <path d="M 0 -18 L 0 40 Q -90 26 -122 32 L -122 -12 Q -60 -28 0 -18 Z" fill="url(#pageL)" stroke="#C79A5B" stroke-width="2"/>
+    <path d="M 0 -18 L 0 40 Q 90 26 122 32 L 122 -12 Q 60 -28 0 -18 Z" fill="url(#pageR)" stroke="#C79A5B" stroke-width="2"/>
+    <path d="M 0 -18 L 0 40" stroke="#B9895045" stroke-width="3"/>
+    <g stroke="#C9AE87" stroke-width="2" stroke-linecap="round">
+      <line x1="-102" y1="0" x2="-20" y2="-9"/>
+      <line x1="-104" y1="13" x2="-18" y2="4"/>
+      <line x1="-106" y1="26" x2="-16" y2="17"/>
+      <line x1="20" y1="-9" x2="102" y2="0"/>
+      <line x1="18" y1="4" x2="104" y2="13"/>
+      <line x1="16" y1="17" x2="106" y2="26"/>
+    </g>
+    <path d="M -122 32 Q 0 46 122 32 L 122 44 Q 0 58 -122 44 Z" fill="#DDBB7E"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="800" y="624" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="46" letter-spacing="10" fill="#FF9736">CLAUDE NOTE</text>
+</svg>
