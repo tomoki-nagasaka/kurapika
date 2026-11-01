@@ -129,8 +129,9 @@ errors go to stderr as `{"error": ..., "message": ...}` with exit code 1.
 | `organize-report`                                         | report for the organize skill                                     |
 | `hook session-start`                                      | what the SessionStart hook runs                                   |
 
-Topic names accept partial matches (`kurapika topic show 認証`) as long as they are
-unique.
+Topics are matched by exact folder name, then exact title. Only the read-only
+`topic show` also accepts a unique partial match (`kurapika topic show 認証`);
+commands that write or delete always need the exact name.
 
 ## Configuration
 
