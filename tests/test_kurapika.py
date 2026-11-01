@@ -209,6 +209,18 @@ class OrganizeTests(KurapikaTestCase):
         self.assertEqual(report["broken_links"][0]["link"], "auth/ADR/ADR-0009-missing")
         self.assertEqual(report["folders_without_summary"], ["legacy-project"])
 
+    def test_links_resolve_like_obsidian(self):
+        # kurapika lives in a subfolder of an Obsidian Vault (the parent has .obsidian/)
+        (self.vault.parent / ".obsidian").mkdir()
+        (self.vault.parent / "my-notes").mkdir()
+        (self.vault.parent / "my-notes" / "design.md").write_text("x", encoding="utf-8")
+        self.run_cli("topic", "new", "--title", "review")
+        (self.vault / "review" / "prs" / "1").mkdir(parents=True)
+        (self.vault / "review" / "prs" / "1" / "report.md").write_text("x", encoding="utf-8")
+        self.run_cli("note", "review", "research", stdin="[[prs/1/report]] [[design]] [[my-notes/design]] [[prs/2/report]]")
+        broken = [b["link"] for b in self.run_cli("organize-report")["broken_links"]]
+        self.assertEqual(broken, ["prs/2/report"])
+
 
 class HookTests(KurapikaTestCase):
     def hook_output(self):
