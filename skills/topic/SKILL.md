@@ -29,7 +29,6 @@ print JSON. If a command fails with `not_configured`, ask the user to run
 - If it's new, propose a short title (Japanese is fine) and **ask before creating**:
   `kurapika topic new --title "<title>"`.
   Then fill `oneline` right away (one sentence: what this topic is about).
-- The user can also switch explicitly with `/topic <name>`.
 
 ## 2. Write to summary.md
 

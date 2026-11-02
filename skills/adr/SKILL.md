@@ -25,7 +25,7 @@ All commands use the `kurapika` CLI and print JSON. If one fails with
 3. Create it:
 
    ```bash
-   kurapika adr new --topic "<topic>" --title "<title>" [--status accepted]
+   kurapika adr new --topic "<topic>" --title "<title>"
    ```
 
    This creates `<topic>/ADR/ADR-XXXX-<title>.md`, adds a link under

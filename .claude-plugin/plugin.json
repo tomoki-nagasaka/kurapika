@@ -1,6 +1,6 @@
 {
   "name": "kurapika",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Per-topic notes in a local Obsidian Vault: research, direction, progress and decisions, recalled with summaries and links",
   "author": {
     "name": "tomoki-nagasaka"

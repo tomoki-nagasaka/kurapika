@@ -1,6 +1,11 @@
 ---
+name: obsidian-init
 description: Set the Obsidian Vault root and note language for kurapika (first-time setup)
+argument-hint: "[vault path]"
+disable-model-invocation: true
 ---
+
+# obsidian-init skill
 
 Set up kurapika. The `kurapika` CLI is on PATH via this plugin's `bin/`.
 
