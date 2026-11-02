@@ -532,7 +532,7 @@ def numbered_docs(topic: Path, kind: str) -> list:
     return docs
 
 
-def topic_info(ctx: Ctx, topic: Path, history_limit: int = 5, full: bool = False) -> dict:
+def topic_info(ctx: Ctx, topic: Path, full: bool = False) -> dict:
     text = read_summary(topic)
     fm = parse_front_matter(text)
     status = fm.get("status", "active")
@@ -552,7 +552,7 @@ def topic_info(ctx: Ctx, topic: Path, history_limit: int = 5, full: bool = False
         info.update(
             {
                 "direction": get_section(text, "direction"),
-                "history_recent": list(reversed(history))[:history_limit],
+                "history_recent": list(reversed(history))[:5],
                 "history_total": len(history),
                 "research_count": len(parse_bullets(get_section(text, "research"))),
                 "adrs": numbered_docs(topic, "ADR"),
@@ -792,16 +792,6 @@ def cmd_config_lang(args):
     return emit(save_config(lang=args.lang))
 
 
-def cmd_config_clear(args):
-    cfg = load_config()
-    if not cfg:
-        return emit({"cleared": False, "reason": "not_configured"})
-    if not args.confirm:
-        return emit({"would_clear": cfg, "hint": "add --confirm to actually clear"})
-    (config_dir() / "config.json").unlink()
-    return emit({"cleared": True, "previous_vault_root": cfg["vault_root"]})
-
-
 # ---------- commands: hook ----------
 
 def session_start_lines(ctx: Ctx) -> list:
@@ -882,9 +872,7 @@ def cmd_topic_new(args):
 
 def cmd_topic_list(args):
     ctx = require_ctx()
-    topics = list_topics(ctx)
-    if not args.all:
-        topics = [t for t in topics if t["status"] != "done"]
+    topics = [t for t in list_topics(ctx) if t["status"] != "done"]
     for t in topics:
         t["oneline"] = first_line(t["oneline"])
         t["now"] = first_line(t["now"])
@@ -893,7 +881,7 @@ def cmd_topic_list(args):
 
 def cmd_topic_show(args):
     ctx = require_ctx()
-    return emit(topic_info(ctx, resolve_topic(ctx, args.name, partial=True), history_limit=args.history, full=True))
+    return emit(topic_info(ctx, resolve_topic(ctx, args.name, partial=True), full=True))
 
 
 def cmd_topic_status(args):
@@ -965,9 +953,7 @@ def cmd_topic_close(args):
 def cmd_note(args):
     ctx = require_ctx()
     topic = resolve_topic(ctx, args.topic)
-    mode = args.mode or ("append" if args.section in APPEND_SECTIONS else "replace")
-    if mode == "replace" and args.section in APPEND_SECTIONS:
-        raise KurapikaError("append_only", f"Section '{args.section}' is append-only.")
+    mode = "append" if args.section in APPEND_SECTIONS else "replace"
     body = demote_headings(read_stdin_body())
     with locked():
         text = read_summary(topic)
@@ -1012,7 +998,7 @@ def cmd_adr_new(args):
     ctx = require_ctx()
     topic = resolve_topic(ctx, args.topic)
     with locked():
-        result = _new_numbered_doc(ctx, topic, "ADR", args.title, "adr.md", "decisions", "history_adr", status=args.status)
+        result = _new_numbered_doc(ctx, topic, "ADR", args.title, "adr.md", "decisions", "history_adr", status="accepted")
     return emit(result)
 
 
@@ -1022,7 +1008,7 @@ def cmd_issue_new(args):
     refs = json.dumps([args.adr_ref] if args.adr_ref else [], ensure_ascii=False)
     with locked():
         result = _new_numbered_doc(
-            ctx, topic, "ISSUE", args.title, "issue.md", "issues", "history_issue", status=args.status, adr_refs=refs
+            ctx, topic, "ISSUE", args.title, "issue.md", "issues", "history_issue", status="open", adr_refs=refs
         )
     return emit(result)
 
@@ -1073,16 +1059,10 @@ def cmd_search(args):
             }
         )
     results.sort(key=lambda r: r["score"], reverse=True)
-    return emit(results[: args.limit])
+    return emit(results[: 10])
 
 
-# ---------- commands: cleanup / organize ----------
-
-def cmd_cleanup(args):
-    ctx = require_ctx()
-    with locked():
-        return emit(run_cleanup(ctx))
-
+# ---------- commands: organize ----------
 
 def cmd_organize_report(args):
     ctx = require_ctx()
@@ -1108,9 +1088,6 @@ def build_arg_parser():
     p = config.add_parser("lang")
     p.add_argument("lang", choices=LANGS)
     p.set_defaults(func=cmd_config_lang)
-    p = config.add_parser("clear")
-    p.add_argument("--confirm", action="store_true")
-    p.set_defaults(func=cmd_config_clear)
 
     hook = sub.add_parser("hook").add_subparsers(dest="hook_command", required=True)
     hook.add_parser("session-start").set_defaults(func=cmd_hook_session_start)
@@ -1120,11 +1097,9 @@ def build_arg_parser():
     p.add_argument("--title", required=True)
     p.set_defaults(func=cmd_topic_new)
     p = topic.add_parser("list")
-    p.add_argument("--all", action="store_true", help="include done topics")
     p.set_defaults(func=cmd_topic_list)
     p = topic.add_parser("show")
     p.add_argument("name")
-    p.add_argument("--history", type=int, default=5)
     p.set_defaults(func=cmd_topic_show)
     p = topic.add_parser("status")
     p.add_argument("name")
@@ -1138,28 +1113,23 @@ def build_arg_parser():
     p = sub.add_parser("note", help="Write to a summary.md section (body from stdin)")
     p.add_argument("topic")
     p.add_argument("section", choices=NOTE_SECTIONS)
-    p.add_argument("--mode", choices=("append", "replace"))
     p.set_defaults(func=cmd_note)
 
     p = sub.add_parser("adr").add_subparsers(dest="adr_command", required=True).add_parser("new")
     p.add_argument("--topic", required=True)
     p.add_argument("--title", required=True)
-    p.add_argument("--status", default="accepted")
     p.set_defaults(func=cmd_adr_new)
 
     p = sub.add_parser("issue").add_subparsers(dest="issue_command", required=True).add_parser("new")
     p.add_argument("--topic", required=True)
     p.add_argument("--title", required=True)
     p.add_argument("--adr-ref", default="", help="ADR filename, e.g. ADR-0001-xxx.md")
-    p.add_argument("--status", default="open")
     p.set_defaults(func=cmd_issue_new)
 
     p = sub.add_parser("search")
     p.add_argument("query")
-    p.add_argument("--limit", type=int, default=10)
     p.set_defaults(func=cmd_search)
 
-    sub.add_parser("cleanup").set_defaults(func=cmd_cleanup)
     sub.add_parser("organize-report").set_defaults(func=cmd_organize_report)
     return parser
 

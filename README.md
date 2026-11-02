@@ -45,10 +45,12 @@ answers "what was that again?" with a summary, history and links.
   always confirmed first.
 - **Recall:** ask "〇〇ってどうなってたっけ" and Claude answers with the summary,
   status, latest history and `obsidian://` links.
-- **Closing:** `/topic-close` digests the topic (conclusion, decisions and why,
-  lessons, reusable snippets) into `knowledge/` and deletes the folder.
+- **Closing:** `/topic-close` (or "このトピック閉じて") digests the topic
+  (conclusion, decisions and why, lessons, reusable snippets) into `knowledge/`
+  and deletes the folder.
 - **Staying tidy:** only files people read are kept. No `.bak` files, the lock
-  file lives in `~/.config/kurapika/`, and empty ADR/ISSUE folders are removed.
+  file lives in `~/.config/kurapika/`, and empty folders inside topics and
+  `knowledge/` are removed at session start.
 
 kurapika only manages its topic folders, `knowledge/` and `index.md`. It never
 touches your other notes and won't overwrite an `index.md` it didn't create.
@@ -86,48 +88,45 @@ For quick local testing without installing, run `claude --plugin-dir /path/to/ku
 
 ## Skills
 
-| Skill      | Triggers on                                                                 | Does                                                                     |
-| ---------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `topic`    | starting or resuming work, research findings, tentative plans, progress     | picks or creates the topic, updates `summary.md`                          |
-| `adr`      | a decision is reached ("〜に決めた", "ADRにして")                              | creates an ADR after confirmation, links it from `summary.md`            |
-| `issue`    | explicit request only ("issue作成", "ADRをissueに分解して")                    | creates issues, standalone or broken down from an ADR                    |
-| `recall`   | "あれなんだっけ", "〇〇どうなってたっけ"                                      | summary, status, latest history and links                                |
-| `organize` | explicit request, or after the session-start suggestion                     | proposes fixes for stale topics, long notes, broken links; applies on OK |
+Every feature is a skill. Each one triggers from conversation and can also be run
+by hand as `/<name>` (e.g. `/topic-close 認証`), except `obsidian-init`, which is
+manual only.
 
-## Commands
+| Skill           | Triggers on                                                                 | Does                                                                     |
+| --------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `obsidian-init` | `/obsidian-init` only                                                       | first-time setup: Vault path and language                                |
+| `topic`         | starting or resuming work, research findings, tentative plans, progress     | picks or creates the topic, updates `summary.md`                          |
+| `adr`           | a decision is reached ("〜に決めた", "ADRにして")                              | creates an ADR after confirmation, links it from `summary.md`            |
+| `issue`         | explicit request only ("issue作成", "ADRをissueに分解して")                    | creates issues, standalone or broken down from an ADR                    |
+| `recall`        | "あれなんだっけ", "〇〇どうなってたっけ"                                      | summary, status, latest history and links                                |
+| `organize`      | explicit request, or after the session-start suggestion                     | proposes fixes for stale topics, long notes, broken links; applies on OK |
+| `topic-close`   | "このトピック閉じて", or agreeing to a close suggestion                        | digests the topic into `knowledge/` and deletes its folder, after confirmation |
 
-| Command              | Does                                                               |
-| -------------------- | ------------------------------------------------------------------ |
-| `/obsidian-init`     | first-time setup: Vault path and language                          |
-| `/obsidian-reset`    | clears the setting (never deletes notes)                           |
-| `/topic [name]`      | switches to a topic, or creates it                                 |
-| `/topic-close [name]`| digests the topic into `knowledge/` and deletes its folder         |
-| `/cleanup`           | runs the mechanical cleanup now                                    |
-
-The SessionStart hook also suggests running the organize skill when it has been
-7+ days since the last tidy-up, or when a topic has had no updates for 30+ days.
+Mechanical upkeep runs automatically in the SessionStart hook. It also suggests the
+organize skill when a topic has had no updates for 30+ days, or otherwise when there
+are active topics and it has been 7+ days since the last tidy-up.
 
 ## CLI (`kurapika`)
 
-Commands, hooks and skills are thin wrappers around `bin/kurapika`. Output is JSON;
+Skills call `kurapika` (`bin/kurapika`, on PATH inside Claude Code);
+the hook runs `scripts/kurapika.py` directly. Output is JSON;
 errors go to stderr as `{"error": ..., "message": ...}` with exit code 1.
 
 | Command                                                   | Does                                                              |
 | --------------------------------------------------------- | ----------------------------------------------------------------- |
 | `init <path> [--create] [--lang ja\|en]`                  | sets the Vault root (and language)                                |
-| `config show` / `config lang ja\|en` / `config clear [--confirm]` | shows / changes / clears the setting                     |
+| `config show` / `config lang ja\|en`                      | shows / changes the setting                                       |
 | `topic new --title T`                                     | creates `<T>/summary.md`                                          |
-| `topic list [--all]`                                      | lists topics (done ones only with `--all`)                        |
-| `topic show NAME [--history N]`                           | summary, status, latest history, ADRs, issues, links              |
+| `topic list`                                              | lists topics that are not done                                    |
+| `topic show NAME`                                         | summary, status, latest 5 history entries, ADRs, issues, links    |
 | `topic status NAME active\|paused\|done`                  | changes the status (logged to history)                            |
 | `topic close NAME [--confirm]`                            | previews, or writes the stdin digest to `knowledge/` and deletes  |
-| `note TOPIC SECTION [--mode append\|replace]`             | writes stdin to `oneline`/`now`/`direction`/`research`/`history`  |
-| `adr new --topic T --title A [--status S]`                | creates the next ADR and links it                                 |
-| `issue new --topic T --title I [--adr-ref F] [--status S]` | creates the next issue and links it                              |
-| `search QUERY [--limit N]`                                | multi-word search over topics and `knowledge/`, with snippets     |
-| `cleanup`                                                 | mechanical cleanup + `index.md` regeneration                      |
+| `note TOPIC SECTION`                                      | writes stdin to a section (`research`/`history` append, others replace) |
+| `adr new --topic T --title A`                             | creates the next ADR and links it                                 |
+| `issue new --topic T --title I [--adr-ref F]`             | creates the next issue and links it                               |
+| `search QUERY`                                            | multi-word search over topics and `knowledge/` (top 10, with snippets) |
 | `organize-report`                                         | report for the organize skill                                     |
-| `hook session-start`                                      | what the SessionStart hook runs                                   |
+| `hook session-start`                                      | mechanical cleanup + `index.md` + active topic list (the hook)    |
 
 Topics are matched by exact folder name, then exact title. Only the read-only
 `topic show` also accepts a unique partial match (`kurapika topic show 認証`);
@@ -151,5 +150,5 @@ claude plugin uninstall kurapika@kurapika-marketplace
 claude plugin marketplace remove kurapika-marketplace
 ```
 
-Neither touches your Vault. Run `/obsidian-reset` first (or delete
-`~/.config/kurapika/`) to clear the setting as well.
+Neither touches your Vault. Delete `~/.config/kurapika/` to clear the setting as
+well.

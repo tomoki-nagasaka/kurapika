@@ -44,6 +44,9 @@ class KurapikaTestCase(unittest.TestCase):
         except json.JSONDecodeError:
             return text
 
+    def cleanup(self):
+        return kurapika.run_cleanup(kurapika.require_ctx())
+
     def summary(self, name):
         return (self.vault / name / "summary.md").read_text(encoding="utf-8")
 
@@ -85,15 +88,14 @@ class TopicTests(KurapikaTestCase):
 
     def test_history_section_is_append_only(self):
         self.run_cli("topic", "new", "--title", "auth")
-        self.run_cli("note", "auth", "history", "--mode", "replace", stdin="x", expect=1)
         self.run_cli("note", "auth", "now", stdin="", expect=1)
 
     def test_show_returns_recent_history_newest_first(self):
         self.run_cli("topic", "new", "--title", "auth")
         for i in range(7):
             self.run_cli("note", "auth", "history", stdin=f"step {i}")
-        shown = self.run_cli("topic", "show", "auth", "--history", "3")
-        self.assertEqual(len(shown["history_recent"]), 3)
+        shown = self.run_cli("topic", "show", "auth")
+        self.assertEqual(len(shown["history_recent"]), 5)
         self.assertTrue(shown["history_recent"][0].endswith("step 6"))
         self.assertEqual(shown["history_total"], 8)
 
@@ -108,7 +110,6 @@ class TopicTests(KurapikaTestCase):
         self.run_cli("topic", "status", "auth", "done")
         self.assertIn("進行中 → 完了", kurapika.get_section(self.summary("auth"), "history"))
         self.assertEqual(self.run_cli("topic", "list"), [])
-        self.assertEqual(len(self.run_cli("topic", "list", "--all")), 1)
 
 
 class AdrIssueTests(KurapikaTestCase):
@@ -182,17 +183,17 @@ class CleanupTests(KurapikaTestCase):
         (self.vault / "user-folder").mkdir()
         (self.vault / "user.md.bak").write_text("keep", encoding="utf-8")
 
-        result = self.run_cli("cleanup")
+        result = self.cleanup()
         self.assertCountEqual(result["removed"], ["auth/ADR/", "auth/summary.md.bak", ".kurapika.lock"])
         self.assertTrue((self.vault / "user-folder").is_dir())
         self.assertTrue((self.vault / "user.md.bak").exists())
-        self.assertEqual(self.run_cli("cleanup")["index"], "unchanged")
+        self.assertEqual(self.cleanup()["index"], "unchanged")
 
     def test_foreign_index_is_never_overwritten(self):
         (self.vault / "index.md").write_text("# my own index\n", encoding="utf-8")
         self.run_cli("topic", "new", "--title", "auth")
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"), "# my own index\n")
-        self.assertEqual(self.run_cli("cleanup")["index"], "conflict")
+        self.assertEqual(self.cleanup()["index"], "conflict")
         self.assertEqual(self.run_cli("organize-report")["index"], "conflict")
 
 
@@ -241,7 +242,7 @@ class HookTests(KurapikaTestCase):
         self.assertNotIn("- old", output)
 
     def test_hook_when_unconfigured(self):
-        self.run_cli("config", "clear", "--confirm")
+        (self.config / "config.json").unlink()
         self.assertIn("/obsidian-init", self.hook_output())
 
     def test_hook_nudges_organize_after_interval(self):
@@ -311,7 +312,7 @@ class SafetyRegressionTests(KurapikaTestCase):
         (own / "空フォルダ").mkdir(parents=True)
         (own / "summary.md").write_text("# 会議メモ\n", encoding="utf-8")
         (own / "old.md.bak").write_text("x", encoding="utf-8")
-        self.assertEqual(self.run_cli("cleanup")["removed"], [])
+        self.assertEqual(self.cleanup()["removed"], [])
         self.assertTrue((own / "空フォルダ").is_dir())
         self.assertEqual(self.run_cli("topic", "new", "--title", "会議メモ", expect=1)["error"], "folder_exists")
         self.assertEqual(self.run_cli("organize-report")["folders_without_summary"], ["会議メモ"])
@@ -324,7 +325,7 @@ class SafetyRegressionTests(KurapikaTestCase):
         (outside / "sub").mkdir()
         (outside / "keep.md.bak").write_text("x", encoding="utf-8")
         (self.vault / "ext").symlink_to(outside, target_is_directory=True)
-        self.run_cli("cleanup")
+        self.cleanup()
         self.assertTrue((outside / "sub").is_dir())
         self.assertTrue((outside / "keep.md.bak").exists())
         self.run_cli("topic", "close", "ext", "--confirm", stdin="x", expect=1)
@@ -348,7 +349,7 @@ class SafetyRegressionTests(KurapikaTestCase):
 
     def test_interrupted_close_leftover_is_cleaned(self):
         (self.vault / (kurapika.CLOSING_PREFIX + "x")).mkdir()
-        self.assertIn(kurapika.CLOSING_PREFIX + "x/", self.run_cli("cleanup")["removed"])
+        self.assertIn(kurapika.CLOSING_PREFIX + "x/", self.cleanup()["removed"])
 
 
 class TemplateTests(unittest.TestCase):

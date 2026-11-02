@@ -10,8 +10,8 @@ description: >-
 
 # Organize skill
 
-Mechanical cleanup (leftover files, empty ADR/ISSUE folders, regenerating
-`index.md`) already runs automatically at session start (`kurapika cleanup`).
+Mechanical cleanup (leftover files, empty folders, regenerating `index.md`)
+already runs automatically in the SessionStart hook.
 This skill handles what needs a human decision.
 
 All commands use the `kurapika` CLI and print JSON. If one fails with
